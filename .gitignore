@@ -2,3 +2,4 @@
 .Rproj.user/
 *.xlsx
 .quarto/
+outputs/.*
