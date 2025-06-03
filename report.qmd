@@ -1,0 +1,58 @@
+---
+title: "Regional Growth Center Criteria Report"
+subtitle: "`r params$center` Regional Growth Center"
+format:
+  docx:
+    reference-doc: custom-reference-doc.docx
+mainfont: "Poppins"
+execute: 
+  echo: false
+  warning: false
+  message: false
+params:
+  center: "SeaTac"
+---
+
+```{r}
+library(tidyverse)
+library(flextable)
+```
+
+```{r}
+df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
+
+df_ctr <- df |> 
+  filter(name == params$center)
+
+```
+
+## Background
+
+`r df_ctr$information`
+
+## Table
+
+```{r}
+
+# set_flextable_defaults(
+#   # font.family = "Poppins", 
+#   # font.size = 10, 
+#   # border.color = "gray", 
+#   # big.mark = ""
+#   )
+
+ft <- df_ctr |> 
+  select(name, rgc_mic, center_type) |> 
+  flextable() |> 
+  bold(part = "header") |> 
+  vline(j = c('name'), border = fp_border_default(), part = "all") |> 
+  autofit()
+
+ft
+
+```
+
+
+## Comments
+
+## Map
