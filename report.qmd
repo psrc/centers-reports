@@ -1,6 +1,5 @@
 ---
-title: "Regional Growth Center Criteria Report"
-subtitle: "`r params$center` Regional Growth Center"
+title: "`r params$center` Regional Growth Center"
 format:
   docx:
     reference-doc: custom-reference-doc.docx
