@@ -22,52 +22,68 @@ library(sf)
 ```
 
 ```{r data}
+
+# tables
+
 df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
 
 df_ctr <- df |> 
   filter(name == params$center)
+
+# shapes
 
 rgc_shp <- readRDS("C:\\Users\\CLam\\github\\centers-monitoring\\data\\rgc_shape.rds")
 
 rgc_ctr <- rgc_shp |>
   filter(name == params$center)
 
+# test
+
+emp <- readRDS("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_employment.rds") |> 
+  select(year, geography, grouping, estimate) |> 
+  filter(year == 2023) |> 
+  filter(geography == params$center & grouping == "Total")
+
+main_tbl <- data.frame(
+  center_name = params$center,
+  center_type = df_ctr$center_type,
+  jobs = as.character(emp$estimate)
+)
+
+main_tbl2 <- main_tbl |> 
+  pivot_longer(cols = colnames(main_tbl),
+               names_to = "join_field",
+               values_to = "Status_filled"
+               )
+
+crit_df_main <- read.xlsx("criteria-table-ref.xlsx")
+crit_df <- crit_df_main |> 
+  left_join(main_tbl2, by = "join_field") |> 
+  mutate(Status = Status_filled)
+
+crit_df2  <- crit_df |> 
+  select(-join_field, -Status_filled)
 
 ```
+
+## Designation Recommendation
 
 ## Background
 
 `r df_ctr$information`
 
-## Table example 1
-
-```{r test table}
+```{r table settings}
 
 i <- 16.5 # width of the side borders in the word_document output (in centimeters)
 w <- i*0.3937 # width of the side borders in the word_document output (in inches)
 
-ft <- df_ctr |>
-  select(name, rgc_mic, center_type) |>
-  flextable() |> 
-  bold(part = "header") |>
-  vline(j = c('name'), border = fp_border_default(), part = "all")
-  
-
-auto_widths <- dim(ft)$widths/sum(dim(ft)$widths)
-ft <- width(ft, width = w*auto_widths)
-ft
-
 ```
-
-## Table example 2
 
 ```{r criteria table}
 
-crit_df <- read.xlsx("criteria-table-ref.xlsx")
-
 std_border <- fp_border(color = "gray")
 
-cft <- crit_df |>
+cft <- crit_df2 |>
   flextable() |> 
   bold(part = "header") |>
   vline(j = c('Criteria'), border = std_border, part = "all") |> 
