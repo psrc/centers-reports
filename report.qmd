@@ -16,13 +16,23 @@ params:
 ```{r}
 library(tidyverse)
 library(flextable)
+library(openxlsx)
+library(officer)
+library(leaflet)
+library(sf)
 ```
 
-```{r}
+```{r data}
 df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
 
 df_ctr <- df |> 
   filter(name == params$center)
+
+rgc_shp <- readRDS("C:\\Users\\CLam\\github\\centers-monitoring\\data\\rgc_shape.rds")
+
+rgc_ctr <- rgc_shp |>
+  filter(name == params$center)
+
 
 ```
 
@@ -30,29 +40,68 @@ df_ctr <- df |>
 
 `r df_ctr$information`
 
-## Table
+## Table example 1
 
-```{r}
+```{r test table}
 
-# set_flextable_defaults(
-#   # font.family = "Poppins", 
-#   # font.size = 10, 
-#   # border.color = "gray", 
-#   # big.mark = ""
-#   )
+i <- 16.5 # width of the side borders in the word_document output (in centimeters)
+w <- i*0.3937 # width of the side borders in the word_document output (in inches)
 
-ft <- df_ctr |> 
-  select(name, rgc_mic, center_type) |> 
+ft <- df_ctr |>
+  select(name, rgc_mic, center_type) |>
   flextable() |> 
-  bold(part = "header") |> 
-  vline(j = c('name'), border = fp_border_default(), part = "all") |> 
-  autofit()
+  bold(part = "header") |>
+  vline(j = c('name'), border = fp_border_default(), part = "all")
+  
 
+auto_widths <- dim(ft)$widths/sum(dim(ft)$widths)
+ft <- width(ft, width = w*auto_widths)
 ft
 
 ```
 
+## Table example 2
+
+```{r criteria table}
+
+crit_df <- read.xlsx("criteria-table-ref.xlsx")
+
+std_border <- fp_border(color = "gray")
+
+cft <- crit_df |>
+  flextable() |> 
+  bold(part = "header") |>
+  vline(j = c('Criteria'), border = std_border, part = "all") |> 
+  hline(border = std_border, part = "body") |> 
+  width(j=1, width = 2) |> # total width = 6.5in
+  width(j=2, width = 4.5) |> 
+  align(align = "left", part = "all") |> 
+  bg(bg = "grey", part = "header")
+  
+# cft_auto_widths <- dim(cft)$widths/sum(dim(cft)$widths)
+# cft <- width(cft, width = w * cft_auto_widths) 
+
+cft
+```
 
 ## Comments
 
 ## Map
+
+```{r map}
+m <- leaflet(options = leafletOptions(zoomControl=FALSE)) |>
+  addProviderTiles(providers$Esri.WorldStreetMap) |>
+  # addProviderTiles(providers$Stadia.StamenTonerLite) |>
+  # addProviderTiles(providers$Esri.NatGeoWorldMap) |>
+  # addProviderTiles(providers$CartoDB.Positron) |>
+  addPolygons(data = rgc_ctr,
+              fillColor = "76787A",
+              weight = 4,
+              opacity = 1.0,
+              color = "#EB4584",
+              dashArray = "4",
+              fillOpacity = 0.0)
+
+m
+```
+
