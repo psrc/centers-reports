@@ -9,6 +9,7 @@ wgs84 <- 4326
 spn <- 2285
 
 rgc_title <- "Regional Growth Center (4/23/2024)"
+mic_title <- "MIC (1/5/2024)"
 
 gtfs_years <- c(2025, 2050)
 gtfs_service <- "spring"
@@ -25,11 +26,38 @@ rgc_shape <- st_read_elmergeo(layer_name = "urban_centers") |>
   mutate(name = gsub("Bellevue", "Bellevue Downtown", name)) |>
   mutate(name = gsub("Redmond-Overlake", "Redmond Overlake", name)) |>
   mutate(name = gsub("Greater Downtown Kirkland", "Kirkland Greater Downtown", name)) |>
-  select("name", "category", "acres") |>
-  rename(geometry="Shape")
+  select(geography = "name") |>
+  rename(geometry="Shape") |>
+  mutate(geography_type = rgc_title)
 
 rgc_names <- rgc_shape |> 
-  select("name") |> 
+  select("geography") |> 
+  st_drop_geometry() |> 
+  pull() |>
+  unique() |>
+  sort()
+
+mic_shape <- st_read_elmergeo(layer_name = "micen") |> 
+  st_transform(crs = spn) |>
+  select(geography = "mic") |>
+  mutate(geography = gsub("Paine Field / Boeing Everett", "Paine Field/Boeing Everett", geography)) |>
+  mutate(geography = gsub("Sumner Pacific", "Sumner-Pacific", geography)) |>
+  mutate(geography = gsub("Puget Sound Industrial Center- Bremerton", "Puget Sound Industrial Center - Bremerton", geography)) |>
+  mutate(geography = gsub("Cascade", "Cascade Industrial Center - Arlington/Marysville", geography)) |>
+  select("geography") |>
+  rename(geometry="Shape") |>
+  mutate(geography_type = mic_title)
+
+mic_names <- mic_shape |> 
+  select("geography") |> 
+  st_drop_geometry() |> 
+  pull() |>
+  unique() |>
+  sort()
+
+rgc_shape <- bind_rows(rgc_shape, mic_shape)
+center_names <- rgc_shape |> 
+  select("geography") |> 
   st_drop_geometry() |> 
   pull() |>
   unique() |>
@@ -149,15 +177,16 @@ for (y in gtfs_years) {
   
   interim_stop_data <- NULL
   # Summarize by Center Boundary
-  for (rgc in rgc_names) {
+  for (rgc in center_names) {
     print(str_glue("Summarzing stops for {rgc}."))
+    g_type <- rgc_shape |> st_drop_geometry() |> filter(geography == rgc) |> select("geography_type") |> distinct() |> pull()
     
     # Stops that intersect Centers
-    s_lyr <- rgc_shape |> filter(name == rgc)
+    s_lyr <- rgc_shape |> filter(geography == rgc)
     
     j_lyr <- st_intersection(ts_lyr, s_lyr) |> 
       st_drop_geometry() |>
-      select("name", mode = "type_name") |>
+      select("geography", "geography_type", mode = "type_name") |>
       mutate(!!stop_year := 1) |>
       group_by(mode) |>
       summarise(!!stop_year := round(sum(.data[[stop_year]]),0)) |>
@@ -167,7 +196,7 @@ for (y in gtfs_years) {
     
     total <- s |> group_by(geography) |> summarise(!!stop_year := sum(.data[[stop_year]])) |> as_tibble() |> mutate(mode = "All Transit Stops")
     
-    s <- bind_rows(s, total) |> mutate(mode = factor(mode, levels = transit_ord)) |> arrange(mode) |> mutate(geography_type = rgc_title)
+    s <- bind_rows(s, total) |> mutate(mode = factor(mode, levels = transit_ord)) |> arrange(mode) |> mutate(geography_type = g_type)
     
     if (is.null(interim_stop_data)) {interim_stop_data <- s} else {interim_stop_data <- bind_rows(interim_stop_data, s)}
     rm(j_lyr, s_lyr, s, total)
@@ -179,7 +208,7 @@ for (y in gtfs_years) {
 
 # Summarize for All Centers
 center_stop_data <- center_stop_data |> select("geography", "geography_type", "mode", "stops_2025", "stops_2050")
-ord <- unique(c(county_order, "All RGCs", rgc_names))
+ord <- unique(c(county_order, rgc_names, mic_names))
 center_stop_data <- center_stop_data |>
   mutate(geography = factor(geography, levels = ord)) |> 
   arrange(geography, mode)
