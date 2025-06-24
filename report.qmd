@@ -9,7 +9,7 @@ execute:
   warning: false
   message: false
 params:
-  center: "SeaTac"
+  center: "Auburn"
  
 ---
 
@@ -22,7 +22,7 @@ library(leaflet)
 library(sf)
 ```
 
-```{r data}
+```{r gen data}
 
 # tables
 
@@ -40,43 +40,59 @@ rgc_ctr <- rgc_shp |>
   st_transform(wgs84) |> 
   filter(name_monitoring == params$center)
 
-# test
-
-# emp <- readRDS("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_employment.rds") |> 
-#   select(year, geography, grouping, estimate) |> 
-#   filter(year == 2023) |> 
-#   filter(geography == params$center & grouping == "Total")
-# 
-# main_tbl <- data.frame(
-#   center_name = params$center,
-#   center_type = df_ctr$center_type,
-#   jobs = as.character(emp$estimate)
-# )
-# 
-# main_tbl2 <- main_tbl |> 
-#   pivot_longer(cols = colnames(main_tbl),
-#                names_to = "join_field",
-#                values_to = "Status_filled"
-#                )
-
-crit_df_main <- read.xlsx("criteria-table-ref.xlsx")
-crit_df <- crit_df_main |>
-  select(-join_field)
-# crit_df <- crit_df_main |> 
-#   left_join(main_tbl2, by = "join_field") |> 
-#   mutate(Status = Status_filled)
-
-# crit_df2  <- crit_df |> 
-#   select(-join_field, -Status_filled)
-
 ```
 
 ```{r transit access}
 transit_stops <- readRDS('data/transit_stop_data.rds')
 
 transit_stops_df <- transit_stops |> 
-  filter(geography == params$center)
+  filter(geography == params$center)|> 
+  filter(mode != "All Transit Stops")
+
+ctrs_transit_srv <- list()
+
+for(i in c("stops_2025", "stops_2050")) {
   
+  if(i == "stops_2050") {
+    modes <- transit_stops_df |> 
+      dplyr::filter(.data[[i]] != 0 & .data[['stops_2025']] == 0) |> 
+      pull(mode)
+    
+    if(length(modes) == 0) {
+      modes_str <- NULL
+    } else {
+      modes_str <- paste("Planned: ", paste(as.character(modes), collapse = ", "))
+    }
+    
+  } else {
+    modes <- transit_stops_df |> 
+      dplyr::filter(.data[[i]] != 0) |> 
+      pull(mode)
+    
+    modes_str <- paste(as.character(modes), collapse = ", ")
+  }
+  
+  ctrs_transit_srv[[i]] <- modes_str
+}
+```
+
+```{r assemble table}
+assembled_tbl <- data.frame(
+  transit_service = paste0(ctrs_transit_srv$stops_2025, "\n", ctrs_transit_srv$stops_2050)
+)
+
+assembled_tbl_pivot <- assembled_tbl |> 
+  pivot_longer(cols = colnames(assembled_tbl),
+               names_to = "join_field",
+               values_to = "Status_filled"
+               )
+
+crit_df_main <- read.xlsx("criteria-table-ref.xlsx")
+
+crit_df <- crit_df_main |>
+  left_join(assembled_tbl_pivot, by = "join_field") |>
+  mutate(Status = Status_filled)|> 
+  select(-join_field, -Status_filled)
 
 ```
 
