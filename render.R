@@ -3,7 +3,8 @@ library(tidyverse)
 
 # create vector of centers
 centers <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv") |> 
-  head(2) |> 
+  filter(name %in% c("SeaTac", "Renton", "Bellevue Downtown")) |>
+  # head(2) |> 
   distinct(name) |> 
   pull(name) |> 
   as.character()

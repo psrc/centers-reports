@@ -9,8 +9,7 @@ execute:
   warning: false
   message: false
 params:
-  center: "Auburn"
- 
+  center: "SeaTac"
 ---
 
 ```{r}
@@ -20,6 +19,7 @@ library(openxlsx)
 library(officer)
 library(leaflet)
 library(sf)
+library(officedown)
 ```
 
 ```{r gen data}
@@ -34,7 +34,8 @@ df_ctr <- df |>
 # shapes
 
 wgs84 <- 4326
-rgc_shp <- readRDS("C:\\Users\\CLam\\github\\centers-reports\\data\\proposed_rgcs.rds")
+# rgc_shp <- readRDS("C:\\Users\\CLam\\github\\centers-reports\\data\\proposed_rgcs.rds")
+rgc_shp <- readRDS("data/proposed_rgcs.rds")
 
 rgc_ctr <- rgc_shp |>
   st_transform(wgs84) |> 
@@ -96,13 +97,14 @@ crit_df <- crit_df_main |>
 
 ```
 
-:::{custom-style="Designation Recommendation"}
+::: {custom-style="Designation Recommendation"}
 Designation Recommendation
 :::
 
 # Background
 
-```{r map}
+
+```{r map, fig.width=3}
 
 m <- leaflet(options = leafletOptions(zoomControl=FALSE)) |>
   # addProviderTiles(providers$Esri.WorldStreetMap) |>
@@ -122,41 +124,38 @@ m
 
 `r df_ctr$information`
 
-```{r table settings}
-
-i <- 16.5 # width of the side borders in the word_document output (in centimeters)
-w <- i*0.3937 # width of the side borders in the word_document output (in inches)
-
-```
-
 ```{r criteria table}
 
 std_border <- fp_border(color = "lightgray")
 
-# cft <- crit_df2 |>
 cft <- crit_df |>
   flextable() |> 
   font(fontname = "Poppins", part = "all") |> 
   bold(part = "header") |>
-  vline(j = c('Criteria'), border = std_border, part = "all") |> 
+  vline(j = c('Criteria', 'Icon'), border = std_border, part = "all") |>
   hline(border = std_border, part = "body") |> 
-  width(j=1, width = 2) |> # total width = 7.5in
-  width(j=2, width = 5.5) |> 
+  width(j=1, width = 2.5) |> # total width = 7.5in
+  width(j=2, width = .5) |>
+  width(j=3, width = 4.5) |> 
   align(align = "left", part = "all") |> 
-  bg(bg = "lightgray", part = "header")
+  bg(bg = "lightgray", part = "header") |> 
+  merge_at(i=1, j = 2:3, part = "header") |> 
+  set_header_labels(Icon = "Status") |> 
+  align(i = 1, j = 2, align = "center", part = "header")
   
-# cft_auto_widths <- dim(cft)$widths/sum(dim(cft)$widths)
-# cft <- width(cft, width = w * cft_auto_widths) 
-
 cft
 ```
 
+```{r table settings, eval=FALSE}
 
-:::{custom-style="Comment Header"}
+i <- 16.5 # width of the side borders in the word_document output (in centimeters)
+w <- i*0.3937 # width of the side borders in the word_document output (in inches)
+
+# cft_auto_widths <- dim(cft)$widths/sum(dim(cft)$widths)
+# cft <- width(cft, width = w * cft_auto_widths) 
+
+```
+
+::: {custom-style="Comment Header"}
 Jurisdiction Comments / Additional Context
 :::
-
-
-
-
-
