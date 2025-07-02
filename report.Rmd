@@ -21,6 +21,7 @@ library(officer)
 library(leaflet)
 library(sf)
 library(officedown)
+library(here)
 ```
 
 ```{r gen data}
@@ -89,7 +90,7 @@ assembled_tbl_pivot <- assembled_tbl |>
                values_to = "Status_filled"
                )
 
-crit_df_main <- read.xlsx("criteria-table-ref.xlsx")
+crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx")
 
 crit_df <- crit_df_main |>
   left_join(assembled_tbl_pivot, by = "join_field") |>
@@ -179,6 +180,13 @@ m
 
 `r df_ctr$information`
 \
+
+::: {custom-style="Table Caption"}
+Regional Growth Centers Criteria
+:::
+
+![](images/status_icons/legend.png)
+
 ```{r criteria table}
 
 std_border <- fp_border(color = "lightgray")
@@ -197,11 +205,11 @@ cft <- crit_df2 |>
   merge_at(i=1, j = 2:3, part = "header") |> 
   set_header_labels(Icon = "Status") |> 
   align(i = 1, j = 2, align = "center", part = "header") |>
-  colformat_image(j = 2, width = .2, height = 0.2)
+  colformat_image(j = 2, width = .2, height = 0.2) |> 
+  align(j = 2, align = "center", part = "body")
   
 cft
 ```
-
 \
 
 ::: {custom-style="Comment Header"}

@@ -5,3 +5,4 @@
 outputs/*.docx
 
 /.quarto/
+images/*.docx
