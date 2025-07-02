@@ -2,7 +2,7 @@
 title: "`r params$center` Regional Growth Center"
 output: 
   officedown::rdocx_document:
-    reference_docx: "custom-reference-doc.docx"
+    reference_docx: custom-reference-doc-rmd.docx
 params:
   center: "SeaTac"
 ---
