@@ -25,7 +25,7 @@ centers <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_
 
 reports <- tibble(
   input = "report.Rmd",
-  output_file = str_glue("{centers}.docx"),
+  output_file = str_glue("outputs/{centers}.docx"),
   params = map(centers, ~list(center = .))
 )
 
