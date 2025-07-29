@@ -5,7 +5,6 @@ library(quarto)
 # create vector of centers
 centers <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv") |>
   filter(name %in% c("SeaTac", "Renton", "Bellevue Downtown")) |>
-  # head(2) |>
   distinct(name) |>
   pull(name) |>
   as.character()
@@ -24,7 +23,7 @@ centers <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_
 # using rmarkdown ----
 
 reports <- tibble(
-  input = "report.Rmd",
+  input = "report-rgc.Rmd",
   output_file = str_glue("outputs/{centers}.docx"),
   params = map(centers, ~list(center = .))
 )

@@ -1,0 +1,153 @@
+---
+title: "`r params$center` Regional Growth Center"
+output: 
+  officedown::rdocx_document:
+    reference_docx: custom-reference-doc-rmd-rgc.docx
+params:
+  center: "SeaTac"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+source('functions/functions.R')
+source('functions/leaflet-map.R')
+source('functions/criteria-table.R')
+```
+
+```{r}
+library(tidyverse)
+library(flextable)
+library(openxlsx)
+library(officer)
+library(leaflet)
+library(sf)
+library(officedown)
+library(here)
+```
+
+```{r gen data}
+
+# tables
+
+df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
+
+df_ctr <- df |> 
+  filter(name == params$center)
+
+# shapes
+wgs84 <- 4326
+
+rgc_shp <- readRDS("data/proposed_rgcs.rds")
+
+rgc_ctr <- rgc_shp |>
+  st_transform(wgs84) |> 
+  filter(name_monitoring == params$center)
+
+```
+
+```{r transit access}
+transit_stops <- readRDS('data/transit_stop_data.rds')
+
+transit_stops_df <- transit_stops |> 
+  filter(geography == params$center)|> 
+  filter(mode != "All Transit Stops")
+
+ctrs_transit_srv <- list()
+
+for(i in c("stops_2025", "stops_2050")) {
+  
+  if(i == "stops_2050") {
+    modes <- transit_stops_df |> 
+      dplyr::filter(.data[[i]] != 0 & .data[['stops_2025']] == 0) |> 
+      pull(mode)
+    
+    if(length(modes) == 0) {
+      modes_str <- NULL
+    } else {
+      modes_str <- paste("Planned: ", paste(as.character(modes), collapse = ", "))
+    }
+    
+  } else {
+    modes <- transit_stops_df |> 
+      dplyr::filter(.data[[i]] != 0) |> 
+      pull(mode)
+    
+    modes_str <- paste(as.character(modes), collapse = ", ")
+  }
+  
+  ctrs_transit_srv[[i]] <- modes_str
+}
+```
+
+```{r prep table}
+assembled_tbl <- data.frame(
+  transit_service = paste0(ctrs_transit_srv$stops_2025, "\n", ctrs_transit_srv$stops_2050)
+)
+
+assembled_tbl_pivot <- assembled_tbl |> 
+  pivot_longer(cols = colnames(assembled_tbl),
+               names_to = "join_field",
+               values_to = "Status_filled"
+               )
+
+crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx")
+
+crit_df <- crit_df_main |>
+  left_join(assembled_tbl_pivot, by = "join_field") |>
+  mutate(Status = Status_filled)|> 
+  select(-Status_filled)
+
+```
+
+```{r icons}
+# https://stackoverflow.com/questions/77597806/how-to-add-fontawesome-icons-to-a-flextable
+# https://ardata-fr.github.io/flextable-book/cell-content.html#images
+
+data_df2 <- add_image_paths(data_path = "data/test-data.xlsx", 
+                            center = params$center)
+
+```
+
+```{r assemble tables}
+crit_df2 <- crit_df |> 
+  left_join(data_df2, by = "join_field") |> 
+  mutate(Icon = icon) |> 
+  select(-icon, -join_field)
+
+```
+
+::: {custom-style="Designation Recommendation"}
+Designation Recommendation
+:::
+
+# Background
+
+
+```{r map, fig.width=3}
+
+m <- create_map(center_shape = rgc_ctr)
+m
+```
+
+`r df_ctr$information`
+\
+
+::: {custom-style="Table Caption"}
+Evaluation of Regional Growth Centers Requirements
+:::
+
+![](images/status_icons/legend.png)
+
+```{r criteria table}
+
+cft <- create_table(data_table = crit_df2)
+cft
+```
+\
+
+::: {custom-style="Comment Header"}
+Jurisdiction Comments / Additional Context
+:::
