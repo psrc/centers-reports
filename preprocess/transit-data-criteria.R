@@ -1,6 +1,7 @@
 # This script generates a table with the modes that responsible for meeting criteria
 
 library(tidyverse)
+library(stringi)
 
 center_info <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
 transit_stops <- readRDS('data/transit_stop_data.rds')
@@ -57,10 +58,6 @@ df_join <- df |>
 
 ### convert vectors to comma separated strings
 
-d <- df_join |> 
-  mutate(all_modes_text = map_chr(all_modes, ~str_c(.x, collapse = ", "))) |> 
-  mutate(existing_modes_text = map_chr(existing_modes, ~str_c(.x, collapse = ", "))) |> 
-  mutate(planned_modes_text = map_chr(planned_modes, ~str_c(.x, collapse = ", ")))
 
 ### identify modes that are responsible for meeting criteria 
 
@@ -70,15 +67,25 @@ d <- df_join |>
 urban_req <- c("Bus", "Bus Rapid Transit")
 metro_req <- c("Light Rail", "Commuter Rail", "Ferry", "Bus Rapid Transit")
 
-dd <- d |> 
+dd <- df_join |> 
   mutate(criteria_success = case_when(
     center_type == "Urban" ~ map(all_modes, ~intersect(.x, urban_req)),
     center_type == "Metro" ~ map(all_modes, ~intersect(.x, metro_req))
-  )) |> 
-  mutate(criteria_success_text = map_chr(criteria_success, ~str_c(.x, collapse = ", ")))
+  )) 
 
 dd2 <- dd |> 
-  select(geography:center_type, ends_with("text")) |> 
-  rename_with(~gsub("_text", "", .x))
+  mutate(existing_modes_clean = str_flatten_comma(existing_modes[[1]], ", and ")) |> 
+  mutate(planned_modes_clean = ifelse(!is.null(planned_modes), str_flatten_comma(planned_modes[[1]], ", and "), NULL)) |> 
+  mutate(criteria_success_clean = str_flatten_comma(criteria_success[[1]], ", and ")) 
 
-openxlsx::write.xlsx(dd2, "T:\\60day-TEMP\\christy\\transit-service-status.xlsx")
+has_plans <- quote(paste("Has existing", get("existing_modes_clean"), "and is planning for", get("planned_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
+no_plans <- quote(paste("Has existing", get("existing_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
+
+test <- dd2 |> 
+  mutate(status = case_when(
+    planned_modes != "NULL" ~ eval_tidy(has_plans),
+    planned_modes == "NULL" ~ eval_tidy(no_plans)
+  ))
+
+
+# openxlsx::write.xlsx(dd2, "T:\\60day-TEMP\\christy\\transit-service-status.xlsx")
