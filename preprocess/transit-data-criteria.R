@@ -81,7 +81,7 @@ dd2 <- dd |>
 has_plans <- quote(paste("Has existing", get("existing_modes_clean"), "and is planning for", get("planned_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
 no_plans <- quote(paste("Has existing", get("existing_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
 
-test <- dd2 |> 
+dd3 <- dd2 |> 
   mutate(status = case_when(
     planned_modes != "NULL" ~ eval_tidy(has_plans),
     planned_modes == "NULL" ~ eval_tidy(no_plans)
