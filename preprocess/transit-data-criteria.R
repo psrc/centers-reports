@@ -76,16 +76,21 @@ dd <- df_join |>
 dd2 <- dd |> 
   mutate(existing_modes_clean = str_flatten_comma(existing_modes[[1]], ", and ")) |> 
   mutate(planned_modes_clean = ifelse(!is.null(planned_modes), str_flatten_comma(planned_modes[[1]], ", and "), NULL)) |> 
-  mutate(criteria_success_clean = str_flatten_comma(criteria_success[[1]], ", and ")) 
+  mutate(criteria_success_clean = str_flatten_comma(criteria_success[[1]], ", and ")) |> 
+  rename(center_name = geography) |> 
+  select(-geography_type) |> 
+  mutate(center_name = ifelse(center_name == "Kirkland Greater Downtown", center_name <- "Greater Downtown Kirkland", center_name))
 
-has_plans <- quote(paste("Has existing", get("existing_modes_clean"), "and is planning for", get("planned_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
-no_plans <- quote(paste("Has existing", get("existing_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
+# has_plans <- quote(paste("Has existing", get("existing_modes_clean"), "and is planning for", get("planned_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
+# no_plans <- quote(paste("Has existing", get("existing_modes_clean"), "to serve the", get("geography"), "RGC.\nMeets criteria with", get("criteria_success_clean")))
+# 
+# dd3 <- dd2 |> 
+#   mutate(status = case_when(
+#     planned_modes != "NULL" ~ rlang::eval_tidy(has_plans),
+#     planned_modes == "NULL" ~ rlang::eval_tidy(no_plans)
+#   )) |> 
+#   select(geography:center_type, ends_with('clean'), status) |> 
+#   rename_with(~gsub("_clean", "", .x), ends_with("clean")) |> 
+#   rename(transit_service = status)
 
-dd3 <- dd2 |> 
-  mutate(status = case_when(
-    planned_modes != "NULL" ~ eval_tidy(has_plans),
-    planned_modes == "NULL" ~ eval_tidy(no_plans)
-  ))
-
-
-# openxlsx::write.xlsx(dd2, "T:\\60day-TEMP\\christy\\transit-service-status.xlsx")
+openxlsx::write.xlsx(dd2, "data/transit-service-status.xlsx")

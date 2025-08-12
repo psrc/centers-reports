@@ -4,7 +4,7 @@ output:
   officedown::rdocx_document:
     reference_docx: custom-reference-doc-rmd-rgc.docx
 params:
-  center: "SeaTac"
+  center: "Renton"
 ---
 
 ```{r setup, include=FALSE}
@@ -31,11 +31,25 @@ library(here)
 ```{r gen data}
 
 # tables
+df <- read.xlsx("data/all-data.xlsx")|> 
+  filter(center_name == params$center)
 
-df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
+# df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
+# test <- read.xlsx("T:\\60day-TEMP\\christy\\centers-reports\\2025 Criteria Report Data RGC for Christy8.4.25-test.xlsx",
+#                   sheet = 3,
+#                   startRow = 2
+#                   ) |> 
+#   mutate(center_name = str_trim(center_name)) |> 
+#   filter(center_name == params$center)
+# 
+# ## information & designation recommendation
+# df_desig <- test |> 
+#   select(center_name, desig_rec)
 
 df_ctr <- df |> 
-  filter(name == params$center)
+  filter(name == params$center) |> 
+  left_join(df_desig, by = c("name" = "center_name"))
+  
 
 # shapes
 wgs84 <- 4326
@@ -48,57 +62,42 @@ rgc_ctr <- rgc_shp |>
 
 ```
 
-```{r transit access}
-transit_stops <- readRDS('data/transit_stop_data.rds')
+```{r transit service}
+# transit_status <- read.xlsx("data/transit-service-status.xlsx") |> 
+#   filter(geography == params$center) |> 
+#   select(transit_service) |> 
+#   pivot_longer(cols = c("transit_service"),
+#                names_to = "join_field",
+#                values_to = "Status_filled")
+```
 
-transit_stops_df <- transit_stops |> 
-  filter(geography == params$center)|> 
-  filter(mode != "All Transit Stops")
+```{r market potential and subarea plan}
+# mpsp <- test |> 
+#   select(-desig_rec, -center_name) |> 
+#   pivot_longer(cols = c("market_targets", "subarea_plan"),
+#                names_to = "join_field",
+#                values_to = "Status_filled")
 
-ctrs_transit_srv <- list()
-
-for(i in c("stops_2025", "stops_2050")) {
-  
-  if(i == "stops_2050") {
-    modes <- transit_stops_df |> 
-      dplyr::filter(.data[[i]] != 0 & .data[['stops_2025']] == 0) |> 
-      pull(mode)
-    
-    if(length(modes) == 0) {
-      modes_str <- NULL
-    } else {
-      modes_str <- paste("Planned: ", paste(as.character(modes), collapse = ", "))
-    }
-    
-  } else {
-    modes <- transit_stops_df |> 
-      dplyr::filter(.data[[i]] != 0) |> 
-      pull(mode)
-    
-    modes_str <- paste(as.character(modes), collapse = ", ")
-  }
-  
-  ctrs_transit_srv[[i]] <- modes_str
-}
 ```
 
 ```{r prep table}
-assembled_tbl <- data.frame(
-  transit_service = paste0(ctrs_transit_srv$stops_2025, "\n", ctrs_transit_srv$stops_2050)
-)
+# df_filled <- bind_rows(list(transit_status, mpsp)) # bind one more table
+df_filled <- df |> 
+  select(center_name, center_type, density_acre, planned_target_density, mix_of_uses, size, transit_service, market_targets, subarea_plan) 
 
-assembled_tbl_pivot <- assembled_tbl |> 
-  pivot_longer(cols = colnames(assembled_tbl),
+df_filled <- df_filled |> 
+  pivot_longer(cols = colnames(df_filled)[!(colnames(df_filled) %in% "center_name")],
                names_to = "join_field",
-               values_to = "Status_filled"
-               )
+               values_to = "Status_filled")
 
-crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx")
+# criteria table will be based on urban or metro ...
+crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx",
+                          sheet = df$center_type)
 
 crit_df <- crit_df_main |>
-  left_join(assembled_tbl_pivot, by = "join_field") |>
+  left_join(df_filled , by = "join_field") |>
   mutate(Status = Status_filled)|> 
-  select(-Status_filled)
+  select(-Status_filled, -center_name)
 
 ```
 
@@ -121,6 +120,10 @@ crit_df2 <- crit_df |>
 
 ::: {custom-style="Designation Recommendation"}
 Designation Recommendation
+:::
+
+::: {custom-style="Designation Recommendation Text"}
+`r df_ctr$desig_rec`
 :::
 
 # Background

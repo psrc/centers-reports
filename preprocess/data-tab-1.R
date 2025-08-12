@@ -8,9 +8,23 @@ colnums <- c(which(letters %in% cols), 28, 29)
 df <- read.xlsx("data/2025 Criteria Report Data RGC for Christy8.8.25.xlsx", 
           startRow = 2,
           cols = colnums) |> 
-  filter(!is.na(center_name))
+  filter(!is.na(center_name)) |> 
+  mutate(center_name = str_trim(center_name))
+
+df2 <- read.xlsx("data/2025 Criteria Report Data RGC for Christy8.8.25.xlsx",
+                 sheet = 2,
+                 startRow = 2,
+                 cols = 1:4)|> 
+  mutate(center_name = str_trim(center_name))
+
+df3 <- read.xlsx("data/transit-service-status.xlsx") |> 
+  select(center_name, ends_with('clean'))|> 
+  mutate(center_name = str_trim(center_name))
 
 df[df == "n/a"] <- NA
+
+df <- df |> 
+  left_join(df2, by = "center_name")
 
 df <- df |> 
   mutate(dens_existing_icon = urban_dens,
@@ -44,7 +58,14 @@ df_text <- df |>
          size = paste0("The ", center_name_clean, " is currently ", round(size_ac, 0), " acres.")
   )
 
-# size
-# transit_service
-# market_targets
-# subarea_plan
+df_text <- df_text |> 
+  left_join(df3, by = "center_name")
+
+df_text <- df_text |> 
+    mutate(transit_service = case_when(
+      planned_modes_clean != "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " and is planning for ", str_to_lower(planned_modes_clean), " to serve the community.\n\n", center_type,": ", str_to_lower(criteria_success_clean)),
+      planned_modes_clean == "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " to serve the community.\n\n", center_type, ": ", str_to_lower(criteria_success_clean))
+    ))
+
+
+openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
