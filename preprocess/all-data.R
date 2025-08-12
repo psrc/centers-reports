@@ -65,12 +65,12 @@ df_text <- df_text |>
 
 df_text <- df_text |> 
     mutate(transit_service = case_when(
-      planned_modes_clean != "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " and is planning for ", str_to_lower(planned_modes_clean), " to serve the community.\n\n", center_type,": ", str_to_lower(criteria_success_clean)),
-      planned_modes_clean == "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " to serve the community.\n\n", center_type, ": ", str_to_lower(criteria_success_clean))
+      planned_modes_clean != "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " and is planning for ", str_to_lower(planned_modes_clean), " to serve the community.", "\n\n", center_type,": ", str_to_lower(criteria_success_clean)),
+      planned_modes_clean == "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " to serve the community.", "\n\n", center_type, ": ", str_to_lower(criteria_success_clean))
     ))
 
 
-# openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
+openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
 
 ## icons ----
 
