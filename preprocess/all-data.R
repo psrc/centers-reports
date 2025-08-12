@@ -1,6 +1,8 @@
 library(openxlsx)
 library(tidyverse)
 
+## main df ----
+
 cols <- c("b", "c", "d", "f", "i", "j", "p", "q", "r", "s", "u", "w", "x", "z") # + ab, ac
 
 colnums <- c(which(letters %in% cols), 28, 29)
@@ -68,4 +70,24 @@ df_text <- df_text |>
     ))
 
 
-openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
+# openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
+
+## icons ----
+
+df_icons <- df_text |> 
+  select(center_name, mix_of_uses_icon, dens_existing_icon, dens_planned_icon, size_icon, criteria_success_clean)
+
+df_icons[df_icons == "Insufficient data"] <- NA
+
+df_icons2 <- df_icons |> 
+  mutate(across(ends_with("icon"), ~str_to_lower(.x))) |> 
+  mutate(across(ends_with("icon"), ~ case_when(.x == "okay" ~ "meets the criteria", .default = .x))) |> 
+  mutate(across(ends_with("icon"), ~ case_when(.x == "does not meet criteria" ~ "does not meet the criteria", .default = .x))) |> 
+  mutate(transit_service = ifelse(is.null(criteria_success_clean) | is.na(criteria_success_clean), "does not meet the criteria", "meets the criteria")) |> 
+  rename(mix_of_uses = mix_of_uses_icon, 
+         density_acre = dens_existing_icon, 
+         planned_target_density = dens_planned_icon,
+         size = size_icon) |> 
+  select(-criteria_success_clean)
+
+# openxlsx::write.xlsx(df_icons2, "data/all-data-icons.xlsx")

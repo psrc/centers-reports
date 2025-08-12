@@ -1,0 +1,6 @@
+Status Icon Color HEX Codes
+
+Green: 4F7A28
+Red: B51A00
+Yellow: D58400
+Gray: 4C4C4C

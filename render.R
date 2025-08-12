@@ -1,12 +1,13 @@
 library(tidyverse)
 library(rmarkdown)
 library(quarto)
+library(openxlsx)
 
 # create vector of centers
-centers <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv") |>
-  filter(name %in% c("SeaTac", "Renton", "Bellevue Downtown")) |>
-  distinct(name) |>
-  pull(name) |>
+centers <- read.xlsx("data/all-data.xlsx") |>
+  filter(center_name %in% c("SeaTac", "Renton", "Bellevue Downtown")) |>
+  distinct(center_name) |>
+  pull(center_name) |>
   as.character()
 
 # using quarto ----

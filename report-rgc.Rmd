@@ -12,12 +12,11 @@ knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
                       message = FALSE)
 
-source('functions/functions.R')
-source('functions/leaflet-map.R')
-source('functions/criteria-table.R')
+fx_files <- list.files('functions', full.names = TRUE)
+sapply(fx_files, source)
 ```
 
-```{r}
+```{r packages}
 library(tidyverse)
 library(flextable)
 library(openxlsx)
@@ -34,22 +33,9 @@ library(here)
 df <- read.xlsx("data/all-data.xlsx")|> 
   filter(center_name == params$center)
 
-# df <- read.csv("C:\\Users\\CLam\\github\\centers-monitoring\\data\\centers_information.csv")
-# test <- read.xlsx("T:\\60day-TEMP\\christy\\centers-reports\\2025 Criteria Report Data RGC for Christy8.4.25-test.xlsx",
-#                   sheet = 3,
-#                   startRow = 2
-#                   ) |> 
-#   mutate(center_name = str_trim(center_name)) |> 
-#   filter(center_name == params$center)
-# 
-# ## information & designation recommendation
-# df_desig <- test |> 
-#   select(center_name, desig_rec)
-
-df_ctr <- df |> 
-  filter(name == params$center) |> 
-  left_join(df_desig, by = c("name" = "center_name"))
-  
+# criteria table will be based on urban or metro ...
+crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx",
+                          sheet = df$center_type)
 
 # shapes
 wgs84 <- 4326
@@ -62,37 +48,16 @@ rgc_ctr <- rgc_shp |>
 
 ```
 
-```{r transit service}
-# transit_status <- read.xlsx("data/transit-service-status.xlsx") |> 
-#   filter(geography == params$center) |> 
-#   select(transit_service) |> 
-#   pivot_longer(cols = c("transit_service"),
-#                names_to = "join_field",
-#                values_to = "Status_filled")
-```
-
-```{r market potential and subarea plan}
-# mpsp <- test |> 
-#   select(-desig_rec, -center_name) |> 
-#   pivot_longer(cols = c("market_targets", "subarea_plan"),
-#                names_to = "join_field",
-#                values_to = "Status_filled")
-
-```
 
 ```{r prep table}
-# df_filled <- bind_rows(list(transit_status, mpsp)) # bind one more table
+
 df_filled <- df |> 
   select(center_name, center_type, density_acre, planned_target_density, mix_of_uses, size, transit_service, market_targets, subarea_plan) 
 
-df_filled <- df_filled |> 
+df_filled <- df_filled |>
   pivot_longer(cols = colnames(df_filled)[!(colnames(df_filled) %in% "center_name")],
                names_to = "join_field",
                values_to = "Status_filled")
-
-# criteria table will be based on urban or metro ...
-crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx",
-                          sheet = df$center_type)
 
 crit_df <- crit_df_main |>
   left_join(df_filled , by = "join_field") |>
@@ -105,17 +70,18 @@ crit_df <- crit_df_main |>
 # https://stackoverflow.com/questions/77597806/how-to-add-fontawesome-icons-to-a-flextable
 # https://ardata-fr.github.io/flextable-book/cell-content.html#images
 
-data_df2 <- add_image_paths(data_path = "data/test-data.xlsx", 
+df_icon_paths <- add_image_paths(data_path = "data/all-data-icons.xlsx", 
                             center = params$center)
-
+  
 ```
 
 ```{r assemble tables}
 crit_df2 <- crit_df |> 
-  left_join(data_df2, by = "join_field") |> 
+  left_join(df_icon_paths, by = "join_field") |> 
   mutate(Icon = icon) |> 
+  mutate(Icon = ifelse(is.na(Icon), "./images/status_icons/hyphen-solid.png", Icon)) |>
   select(-icon, -join_field)
-
+   
 ```
 
 ::: {custom-style="Designation Recommendation"}
@@ -123,7 +89,7 @@ Designation Recommendation
 :::
 
 ::: {custom-style="Designation Recommendation Text"}
-`r df_ctr$desig_rec`
+`r df$desig_rec`
 :::
 
 # Background
@@ -135,7 +101,7 @@ m <- create_map(center_shape = rgc_ctr)
 m
 ```
 
-`r df_ctr$information`
+`r df$info`
 \
 
 ::: {custom-style="Table Caption"}
