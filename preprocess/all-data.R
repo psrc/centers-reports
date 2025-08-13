@@ -1,3 +1,5 @@
+# This script will create two excel files: a main dataframe with all content and a dataframe specifically for image paths (icons in flextable)
+
 library(openxlsx)
 library(tidyverse)
 
@@ -65,9 +67,10 @@ df_text <- df_text |>
 
 df_text <- df_text |> 
     mutate(transit_service = case_when(
-      planned_modes_clean != "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " and is planning for ", str_to_lower(planned_modes_clean), " to serve the community.", "\n\n", center_type,": ", str_to_lower(criteria_success_clean)),
-      planned_modes_clean == "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " to serve the community.", "\n\n", center_type, ": ", str_to_lower(criteria_success_clean))
-    ))
+      planned_modes_clean != "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " service and is planning for ", str_to_lower(planned_modes_clean), " to serve the community.", "\n\n", center_type,": ", str_to_lower(criteria_success_clean)),
+      planned_modes_clean == "" ~ paste0("The center has existing ", str_to_lower(existing_modes_clean), " service to serve the community.", "\n\n", center_type, ": ", str_to_lower(criteria_success_clean))
+    )) |> 
+  mutate(subarea_plan = str_squish(subarea_plan))
 
 
 openxlsx::write.xlsx(df_text, "data/all-data.xlsx")

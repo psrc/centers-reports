@@ -1,11 +1,12 @@
 library(tidyverse)
 library(rmarkdown)
-library(quarto)
+# library(quarto)
 library(openxlsx)
 
 # create vector of centers
 centers <- read.xlsx("data/all-data.xlsx") |>
-  # filter(center_name %in% c("SeaTac", "Renton", "Bellevue Downtown")) |>
+  mutate(center_name = str_trim(center_name)) |> 
+  # filter(center_name %in% c("SeaTac", "Renton", "Bellevue Downtown", "Redmond Overlake", "Greater Downtown Kirkland")) |>
   distinct(center_name) |>
   pull(center_name) |>
   as.character()
@@ -25,6 +26,7 @@ filenames <- str_replace_all(centers, "Seattle First Hill/Capitol Hill", "Seattl
 
 # using rmarkdown ----
 
+# out_dir <- "outputs"
 out_dir <- paste0("T:\\60day-TEMP\\christy\\centers-reports\\", paste0("outputs_", Sys.Date()))
 
 if (!dir.exists(out_dir)) {
