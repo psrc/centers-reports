@@ -45,15 +45,7 @@ df <- df |>
                                    dens_existing_icon == "Needs Improvement" ~ "needs improvement")) |> 
   mutate(dens_planned_icon = case_when(dens_planned_icon == "Okay" ~ "meets the criteria",
                                   dens_planned_icon == "Does Not Meet Criteria" ~ "does not meet the criteria",
-                                  dens_planned_icon == "Needs Improvement" ~ "needs improvement")) #|> 
-  # mutate(size_icon = case_when(size_icon == "Okay" ~ "meets",
-  #                              size_icon == "Does Not Meet Criteria" ~ "does not meet",
-  #                              size_icon == "Needs Improvement" ~ "needs improvement"))
-
-# test <- df |>
-  # select(center_name, size_urban, size_metro, size)
-#   select(center_name, urban_dens_planned, metro_dens_planned, dens_planned)
-#   select(center_name, urban_dens, metro_dens, dens_existing)
+                                  dens_planned_icon == "Needs Improvement" ~ "needs improvement"))
 
 df_text <- df |> 
   mutate(density_acre = paste0("The ", center_name_clean,"'s current density is ", round(exist_au, 0), " people per acre, which ", dens_existing_icon, "."),
@@ -73,7 +65,7 @@ df_text <- df_text |>
   mutate(subarea_plan = str_squish(subarea_plan))
 
 
-openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
+# openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
 
 ## icons ----
 

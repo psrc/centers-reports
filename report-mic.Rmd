@@ -1,0 +1,124 @@
+---
+title: "`r params$center` Manufacturing/Industrial Center"
+output: 
+  officedown::rdocx_document:
+    reference_docx: custom-reference-doc-rmd-mic.docx
+params:
+  center: "Ballard-Interbay"
+  filename: "Ballard-Interbay"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+fx_files <- list.files('functions', full.names = TRUE)
+sapply(fx_files, source)
+
+```
+
+```{r}
+library(tidyverse)
+library(flextable)
+library(openxlsx)
+library(officer)
+library(leaflet)
+library(sf)
+library(officedown)
+library(here)
+```
+
+```{r gen data}
+
+# tables
+df <- read.xlsx("data/all-data.xlsx")|>
+  filter(center_name == params$center) |>
+  mutate(transit_service = str_replace(transit_service, "\n", "\n\n"))
+
+# criteria table will be based on urban or metro ...
+crit_df_main <- read.xlsx("criteria-table-ref-mic.xlsx",
+                          sheet = df$center_type)
+
+# shapes
+wgs84 <- 4326
+
+rgc_shp <- readRDS("data/mics.rds")
+
+rgc_ctr <- rgc_shp |>
+  st_transform(wgs84) |> 
+  filter(name_monitoring == params$center)
+
+```
+
+```{r prep table}
+
+df_filled <- df |> 
+  select(center_name, center_type, existing_jobs, planned_jobs, industrial_employment, size, transit_service, core_ind_uses, ind_ret_strategies, subarea_plan) 
+
+df_filled <- df_filled |>
+  pivot_longer(cols = colnames(df_filled)[!(colnames(df_filled) %in% "center_name")],
+               names_to = "join_field",
+               values_to = "Status_filled")
+
+crit_df <- crit_df_main |>
+  left_join(df_filled , by = "join_field") |>
+  mutate(Status = Status_filled)|> 
+  select(-Status_filled, -center_name)
+
+```
+
+```{r icons}
+# https://stackoverflow.com/questions/77597806/how-to-add-fontawesome-icons-to-a-flextable
+# https://ardata-fr.github.io/flextable-book/cell-content.html#images
+
+df_icon_paths <- add_image_paths(data_path = "data/all-data-icons.xlsx", 
+                            center = params$center)
+  
+```
+
+```{r assemble tables}
+crit_df2 <- crit_df |> 
+  left_join(df_icon_paths, by = "join_field") |> 
+  mutate(Icon = icon) |> 
+  mutate(Icon = ifelse(is.na(Icon), "./images/status_icons/hyphen-solid.png", Icon)) |>
+  select(-icon, -join_field)
+   
+```
+
+::: {custom-style="Designation Recommendation"}
+Designation Recommendation
+:::
+
+::: {custom-style="Designation Recommendation Text"}
+`r df$desig_rec`
+:::
+
+# Background
+
+
+```{r map, fig.width=3}
+
+m <- create_map(center_shape = rgc_ctr)
+m
+```
+
+`r df$info`
+\
+
+::: {custom-style="Table Caption"}
+Evaluation of Manufacturing/Industrial Centers Requirements
+:::
+
+![](images/status_icons/legend.png)
+
+```{r criteria table}
+
+cft <- create_table(data_table = crit_df2)
+cft
+```
+\
+
+::: {custom-style="Comment Header"}
+Jurisdiction Comments / Additional Context
+:::
