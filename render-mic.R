@@ -3,19 +3,16 @@ library(rmarkdown)
 library(openxlsx)
 
 # create vector of centers
-centers <- read.xlsx("data/all-data.xlsx") |>
-  mutate(center_name = str_trim(center_name)) |> 
-  # filter(center_name %in% c("Ballard-Interbay", "Kent MIC")) |>
+centers <- read.xlsx("data/all-data-mic.xlsx") |>
+  mutate(center_name = str_trim(center_name)) |>
   distinct(center_name) |>
   pull(center_name) |>
   as.character()
 
-centers <- read.xlsx("data/centers_lkup.xlsx") |>
-  mutate(center_name = str_trim(name_monitoring)) |> 
-  filter(center_type == "mic") |> 
-  # filter(center_name %in% c("Ballard-Interbay", "Kent MIC")) |>
-  distinct(center_name) |>
-  pull(center_name) |>
+centers_name_clean <- read.xlsx("data/all-data-mic.xlsx") |>
+  mutate(center_name_clean = str_trim(center_name_clean)) |>
+  distinct(center_name_clean) |>
+  pull(center_name_clean) |>
   as.character()
 
 filenames <- str_replace_all(centers, "/", "-")
@@ -32,7 +29,7 @@ if (!dir.exists(out_dir)) {
 reports <- tibble(
   input = "report-mic.Rmd",
   output_file = str_glue(out_dir, "/{filenames}.docx"),
-  params = map2(centers, filenames, ~list(center = .x, filename = .y))
+  params = pmap(list(centers, filenames, centers_name_clean), function(x, y, z) list(center = x, filename = y, center_name_clean = z))
 )
 
 pwalk(reports, ~rmarkdown::render(input = ..1, output_file = ..2, params = ..3))

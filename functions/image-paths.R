@@ -1,6 +1,6 @@
 # update main df with image paths to 'icon' column
 
-add_image_paths <- function(data_path = "data/all-data-icons.xlsx", center = params$center) {
+add_image_paths <- function(data_path, center = params$center) {
   df <- read.xlsx(data_path) |> 
     filter(center_name == center) 
   
