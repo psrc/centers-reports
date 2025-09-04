@@ -71,9 +71,10 @@ df_text <- df_text |>
   mutate(transit_service = case_when(
     planned_modes_clean != "" ~ paste0("The ", center_name_clean, " is within a transit service district with ", str_to_lower(existing_modes_clean), " service and is also planning for ", str_to_lower(planned_modes_clean), " service."),
     planned_modes_clean == "" ~ paste0("The ", center_name_clean, " is within a transit service district with ", str_to_lower(existing_modes_clean), " service."),
-    is.na(planned_modes_clean) ~ ts_dnm
+    # (str_detect(center_name, "^[S|F].*")) ~ ts_dnm
     )) |>
-  mutate(transit_service = ifelse(existing_modes_clean == "" & planned_modes_clean != "", paste0("The ", center_name_clean, " is within a transit service district that is planning for ", str_to_lower(planned_modes_clean), " service."), transit_service)) |> 
+  mutate(transit_service = ifelse(str_detect(center_name, "^[S|F].*"), ts_dnm, transit_service)) |> 
+  # mutate(transit_service = ifelse(existing_modes_clean == "" & planned_modes_clean != "", paste0("The ", center_name_clean, " is within a transit service district that is planning for ", str_to_lower(planned_modes_clean), " service."), transit_service)) |> 
   rename(ind_ret_strategies = ind_ret) |> 
   mutate(subarea_plan = str_squish(subarea_plan)) |> 
   mutate(core_ind_uses = str_c(core_ind_uses, "."),
@@ -102,4 +103,4 @@ df_icons3 <- df_icons2 |>
          industrial_employment = indus_emp,
          )
 
-openxlsx::write.xlsx(df_icons3, "data/all-data-icons-mic.xlsx")
+# openxlsx::write.xlsx(df_icons3, "data/all-data-icons-mic.xlsx")
