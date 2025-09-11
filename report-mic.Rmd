@@ -37,7 +37,8 @@ library(here)
 # tables
 df <- read.xlsx("data/all-data-mic.xlsx")|>
   filter(center_name == params$center) |>
-  mutate(core_ind_uses = str_replace(core_ind_uses, "\n", "\n\n"))
+  mutate(core_ind_uses = str_replace(core_ind_uses, "\n", "\n\n")) |> 
+  mutate(market_targets = str_replace(market_targets, "\n", "\n\n"))
 
 # criteria table will be based on urban or metro ...
 crit_df_main <- read.xlsx("criteria-table-ref-mic.xlsx")

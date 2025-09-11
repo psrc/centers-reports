@@ -80,6 +80,18 @@ df_text <- df_text |>
   mutate(core_ind_uses = str_c(core_ind_uses, "."),
          ind_ret_strategies = str_c(ind_ret_strategies, "."))
 
+# add job change since 2010
+jobchg <- read.xlsx("data/2025 Criteria Report Data MIC for Christy 8.27.25_2.xlsx",
+                sheet = 2,
+                startRow = 2,
+                cols = c(1, 4))|> 
+  mutate(center_name = str_trim(center_name)) |> 
+  mutate(job_change_text = paste0("Since 2010, the center has added ", prettyNum(round(job_change, 0), big.mark = ","), " jobs."))
+
+df_text <- df_text |> 
+  left_join(jobchg, by = "center_name") |> 
+  mutate(market_targets = paste0(market_targets,"\n\n", job_change_text))
+
 openxlsx::write.xlsx(df_text, "data/all-data-mic.xlsx")
 
 ## icons ----

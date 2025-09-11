@@ -33,7 +33,8 @@ library(here)
 # tables
 df <- read.xlsx("data/all-data.xlsx")|> 
   filter(center_name == params$center) |> 
-  mutate(transit_service = str_replace(transit_service, "\n", "\n\n"))
+  mutate(transit_service = str_replace(transit_service, "\n", "\n\n")) |> 
+  mutate(market_targets = str_replace(market_targets, "\n", "\n\n"))
 
 # criteria table will be based on urban or metro ...
 crit_df_main <- read.xlsx("criteria-table-ref-rgc.xlsx",

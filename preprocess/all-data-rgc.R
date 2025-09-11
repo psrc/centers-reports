@@ -64,8 +64,19 @@ df_text <- df_text |>
     )) |> 
   mutate(subarea_plan = str_squish(subarea_plan))
 
+# add density since 2010
+au <- read.xlsx("data/2025 Criteria Report Data RGC for Christy8.8.25_2.xlsx",
+                 sheet = 2,
+                 startRow = 2,
+                 cols = c(1, 4))|> 
+  mutate(center_name = str_trim(center_name)) |> 
+  mutate(au_text = paste0("Since 2010, the center has increased density by ", round(au, 0), " people per acre."))
 
-# openxlsx::write.xlsx(df_text, "data/all-data.xlsx")
+df_au <- df_text |> 
+  left_join(au, by = "center_name") |> 
+  mutate(market_targets = paste0(market_targets,"\n\n", au_text))
+
+openxlsx::write.xlsx(df_au, "data/all-data.xlsx")
 
 ## icons ----
 
