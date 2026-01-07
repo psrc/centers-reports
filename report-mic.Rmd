@@ -99,8 +99,11 @@ Designation Recommendation
 
 # Background
 
+```{r}
+map_alt_text <- paste("A map of", params$center,"with the manufacturing/industrial center outlined in pink")
+```
 
-```{r map, fig.width=3}
+```{r map, fig.width=3, fig.alt=map_alt_text}
 
 m <- create_map(center_shape = rgc_ctr)
 m
@@ -113,7 +116,13 @@ m
 Evaluation of Manufacturing/Industrial Centers Requirements
 :::
 
-![](images/status_icons/legend.png)
+<!-- ![](images/status_icons/legend.png) -->
+```{r, fig.height= .5, fig.width=6.5, fig.align="left", fig.alt = "A key for the Status Icons. A green checkmark means 'on track'; a yellow triangle with an exclamation mark inside means 'needs improvement'; a red circle with a line across it means 'does not meet criteria'; a grey dash means 'not applicable.'."}
+knitr::include_graphics("images/status_icons/legend.png")
+```
+
+
+
 
 ```{r criteria table}
 

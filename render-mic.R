@@ -20,7 +20,7 @@ filenames <- str_replace_all(centers, "/", "-")
 # using rmarkdown ----
 
 # out_dir <- "outputs"
-out_dir <- paste0("T:\\60day-TEMP\\christy\\centers-reports\\", paste0("outputs_", Sys.Date()))
+out_dir <- paste0("T:\\60day-TEMP\\christy\\centers-reports\\", paste0("test_outputs_", Sys.Date()))
 
 if (!dir.exists(out_dir)) {
   dir.create(out_dir)
