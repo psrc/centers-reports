@@ -6,7 +6,7 @@ library(openxlsx)
 # create vector of centers
 centers <- read.xlsx("data/all-data.xlsx") |>
   mutate(center_name = str_trim(center_name)) |> 
-  # filter(center_name %in% c("SeaTac", "Renton", "Bellevue Downtown", "Redmond Overlake", "Greater Downtown Kirkland")) |>
+  filter(center_name %in% c("Federal Way", "Lakewood")) |>
   distinct(center_name) |>
   pull(center_name) |>
   as.character()

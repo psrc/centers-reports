@@ -4,6 +4,7 @@ library(tidyverse)
 library(sf)
 library(leaflet)
 library(openxlsx)
+library(psrcelmer)
 
 # Inputs ----
 
@@ -13,14 +14,16 @@ ctr_name_lkup <- read.xlsx("data/centers_lkup.xlsx")
 
 # rgc ----
 
-prop_ctrs_path <- "C:\\Users\\CLam\\Puget Sound Regional Council\\GIS - Sharing\\Projects\\Growth\\Centers\\Centers_Criteria_Report"
-prop_ctrs_file <- file.path(prop_ctrs_path, "New File Geodatabase.gdb")
+# prop_ctrs_path <- "C:\\Users\\CLam\\Puget Sound Regional Council\\GIS - Sharing\\Projects\\Growth\\Centers\\Centers_Criteria_Report"
+# prop_ctrs_file <- file.path(prop_ctrs_path, "New File Geodatabase.gdb")
+# prgcs_01 <- st_read(dsn = prop_ctrs_file, layer = "Proposed_RGCs")|> 
+#   st_transform(wgs84)
 
 # un <- Sys.getenv("USERNAME")
 # gis_dir <- file.path("C:/Users",str_to_lower(un),"Puget Sound Regional Council/GIS - Sharing/Projects/Transportation/RTP_2026")
 # options(dplyr.summarise.inform = FALSE)
 
-prgcs <- st_read(dsn = prop_ctrs_file, layer = "Proposed_RGCs")|> 
+prgcs <- st_read_elmergeo('urban_centers')|> # updated Lakewood and Federal Way boundaries (1/2026)
   st_transform(wgs84)
 
 # proposed rgcs with existing ----
